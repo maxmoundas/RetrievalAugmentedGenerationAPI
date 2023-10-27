@@ -7,21 +7,20 @@ from langchain.vectorstores.faiss import FAISS
 import pickle
 from dotenv import load_dotenv
 from openai.embeddings_utils import get_embedding, cosine_similarity
-import logging  # Step 1: Import logging
-import numpy as np
-import re
 
-'''
-#Stores api key into the vectorstore
+# Stores api key into the vectorstore
 load_dotenv()
-# import numpy as np
-# import re
+
+import numpy as np
+
+import re
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTTextBox, LTTextLine
 import logging  # Step 1: Import logging
 from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
-'''
+
+import os
 
 # Step 2: Setup the logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -65,20 +64,17 @@ def extract_text_with_sections_and_page_numbers(pdf_path):
 
 def ingest_docs(file_name):
     """Get documents from a PDF."""
-    documents = extract_text_with_sections_and_page_numbers(file_name)
-    logger.info("Finished parsing pdf text")
+    if os.path.isfile(file_name):
+        documents = extract_text_with_sections_and_page_numbers(file_name)
+        logger.info("Finished parsing pdf text")
 
-    load_dotenv()
-
-    embeddings = OpenAIEmbeddings()
+        embeddings = OpenAIEmbeddings()
+            
+        # Add to FAISS
+        vector_store = FAISS.from_texts(documents, embeddings)
         
-    # Add to FAISS
-    vector_store = FAISS.from_texts(documents, embeddings)
-    
-    # Pickle VectorStore
-    with open("faiss_vectorstore.pkl", "wb") as f:
-        pickle.dump(vector_store, f)
-
-if __name__ == "__main__":
-    # For now, the default file_name for running the script standalone is set as 'NIST.SP.800-61r2.pdf'
-    ingest_docs('NIST.SP.800-61r2.pdf')
+        # Pickle VectorStore
+        with open("faiss_vectorstore.pkl", "wb") as f:
+            pickle.dump(vector_store, f)
+    else:
+        raise Exception("NO PDF PASSED TO VECTORSTORE!!!!!") 
